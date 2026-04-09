@@ -1,0 +1,32 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run once a day at 23:00 UTC, which is around midnight in Helsinki
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze code with CodeQL
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3

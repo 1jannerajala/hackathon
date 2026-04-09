@@ -55,3 +55,71 @@ Follow a guided, hands-on workshop to learn GitHub Copilot from the ground up us
 Explore real-world app modernization scenarios — migrate, refactor, and modernize existing applications with AI assistance:
 
 👉 **[GitHub Copilot App Modernization](https://learn.microsoft.com/en-us/azure/developer/github-copilot-app-modernization/overview)** — End-to-end guidance for modernizing applications using GitHub Copilot on Azure.
+
+---
+
+## Outlook Email Summary Agent
+
+This repository now includes a Python agent that authenticates with Microsoft Outlook via OAuth and writes a Markdown summary file for your mailbox.
+
+### Added files
+
+- `email_summary_agent.py` — Python implementation for the summary agent
+- `requirements.txt` — required packages for authentication and Graph API calls
+- `.env.example` — sample environment variables for Azure app settings
+
+### Setup
+
+1. Register an Azure app in the Azure portal and grant it the `Mail.Read` Microsoft Graph permission.
+2. Set `AZURE_CLIENT_ID` and `AZURE_TENANT_ID` in your environment or create a `.env` file based on `.env.example`.
+3. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Usage
+
+Run the agent and generate a Markdown summary:
+
+```bash
+python email_summary_agent.py --output outlook_summary.md
+```
+
+Limit the number of messages if your mailbox is large:
+
+```bash
+python email_summary_agent.py --output outlook_summary.md --max-emails 500
+```
+
+Use app-only authentication for unattended enterprise scheduling:
+
+```bash
+python email_summary_agent.py --output outlook_summary.md --client-secret "$AZURE_CLIENT_SECRET" --mailbox "service-mailbox@yourdomain.com"
+```
+
+### Scheduled weekday runs at 07:00 Helsinki time
+
+The scheduler script can run the same summary job automatically on weekdays at 07:00 Europe/Helsinki, including correct handling of DST transitions.
+
+```bash
+python email_summary_scheduler.py --output outlook_summary.md --client-secret "$AZURE_CLIENT_SECRET" --mailbox "service-mailbox@yourdomain.com"
+```
+
+Keep the scheduler process running in the background or as a service so it triggers every weekday at the local Helsinki morning hour.
+
+### Code quality checks
+
+This repository includes a nightly GitHub Actions CodeQL scan configured in `.github/workflows/codeql-analysis.yml`.
+
+- Runs daily at 23:00 UTC, which is around midnight Helsinki time
+- Executes on push to `main`, pull requests against `main`, and on a schedule
+- Provides automated static analysis and security code scanning for the Python codebase
+
+### Notes
+
+- The agent supports both delegated authentication (device code flow) and unattended app-only authentication using a client secret.
+- For app-only access to a service mailbox, set `AZURE_CLIENT_SECRET` and `SERVICE_MAILBOX` in your environment or `.env` file.
+- App-only Graph permissions require admin consent and typically use `Mail.Read.All` for mailbox access.
+- After successful sign-in or token acquisition, the access token is optionally cached in `token_cache.bin` so scheduled runs can execute silently.
+- Output is written to a Markdown file containing total messages, unread count, top senders, top subjects, and sample previews.
